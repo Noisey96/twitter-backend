@@ -1,33 +1,69 @@
 import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
 
 const router = Router();
+const prisma = new PrismaClient();
 
 // create a new user
-router.post('/', (req, res) => {
-	res.status(501).json({ error: 'Not Implemented' });
+router.post('/', async (req, res) => {
+	const { email, name, username } = req.body;
+
+	try {
+		const result = await prisma.user.create({
+			data: {
+				email,
+				name,
+				username,
+				bio: "Hello, I'm new on Twitter",
+			},
+		});
+
+		res.json(result);
+	} catch (err) {
+		res.status(400).json({ error: 'Username and email should be unique.' });
+	}
 });
 
 // list all users
-router.get('/', (req, res) => {
-	res.status(501).json({ error: 'Not Implemented' });
+router.get('/', async (req, res) => {
+	const allUsers = await prisma.user.findMany();
+
+	res.json(allUsers);
 });
 
 // get one user
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
 	const { id } = req.params;
-	res.status(501).json({ error: `Not Implemented for User ${id}` });
+
+	const user = await prisma.user.findUnique({ where: { id: Number(id) } });
+
+	res.json(user);
 });
 
 // update one user
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
 	const { id } = req.params;
-	res.status(501).json({ error: `Not Implemented for User ${id}` });
+	const { name, image, bio } = req.body;
+
+	try {
+		const result = await prisma.user.update({
+			where: { id: Number(id) },
+			data: { bio, name, image },
+		});
+
+		res.json(result);
+	} catch (err) {
+		res.status(400).json({ error: `Failed to update user ${id}` });
+	}
 });
 
 // delete one user
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
 	const { id } = req.params;
-	res.status(501).json({ error: `Not Implemented for User ${id}` });
+
+	await prisma.user.delete({ where: { id: Number(id) } });
+
+	res.sendStatus(200);
 });
 
 export default router;

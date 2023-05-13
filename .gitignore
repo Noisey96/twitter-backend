@@ -1,1 +1,8 @@
+# node
 node_modules/
+
+# environment
+.env
+
+# database
+*.db
