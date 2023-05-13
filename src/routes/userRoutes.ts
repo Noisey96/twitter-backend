@@ -35,7 +35,10 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
 	const { id } = req.params;
 
-	const user = await prisma.user.findUnique({ where: { id: Number(id) } });
+	const user = await prisma.user.findUnique({
+		where: { id: Number(id) },
+		include: { tweets: true },
+	});
 
 	if (!user) return res.status(404).json({ error: `Tweet ${id} not found` });
 	res.json(user);
@@ -62,9 +65,12 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
 	const { id } = req.params;
 
-	await prisma.user.delete({ where: { id: Number(id) } });
-
-	res.sendStatus(200);
+	try {
+		await prisma.user.delete({ where: { id: Number(id) } });
+		res.sendStatus(200);
+	} catch (err) {
+		res.status(400).json({ error: `Failed to delete user ${id}, because user has active tweets.` });
+	}
 });
 
 export default router;
