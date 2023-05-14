@@ -36,7 +36,7 @@ router.get('/:id', async (req, res) => {
 	const { id } = req.params;
 
 	const user = await prisma.user.findUnique({
-		where: { id: Number(id) },
+		where: { id: id },
 		include: { tweets: true },
 	});
 
@@ -51,7 +51,7 @@ router.put('/:id', async (req, res) => {
 
 	try {
 		const result = await prisma.user.update({
-			where: { id: Number(id) },
+			where: { id: id },
 			data: { bio, name, image },
 		});
 
@@ -66,7 +66,7 @@ router.delete('/:id', async (req, res) => {
 	const { id } = req.params;
 
 	try {
-		await prisma.user.delete({ where: { id: Number(id) } });
+		await prisma.user.delete({ where: { id: id } });
 		res.sendStatus(200);
 	} catch (err) {
 		res.status(400).json({ error: `Failed to delete user ${id}, because user has active tweets.` });

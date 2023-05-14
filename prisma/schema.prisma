@@ -11,22 +11,39 @@ datasource db {
 }
 
 model User {
-  id Int @id @default(autoincrement())
+  id String @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   email String @unique
-  username String @unique
-  name String
+
+  username String? @unique
+  name String?
   image String?
   bio String?
   isVerified Boolean @default(false)
 
+  tokens Token[]
   tweets Tweet[]
 }
 
+model Token {
+  id String @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  type String // EMAIL/API
+  emailToken String? @unique
+
+  valid Boolean @default(true)
+  expiration DateTime
+
+  userId String
+  user User @relation(fields: [userId], references: [id])
+}
+
 model Tweet {
-  id Int @id @default(autoincrement())
+  id String @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -34,6 +51,6 @@ model Tweet {
   image String?
   impression Int @default(0)
 
-  userId Int
+  userId String
   user User @relation(fields: [userId], references: [id])
 }

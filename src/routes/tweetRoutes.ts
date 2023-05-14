@@ -6,14 +6,16 @@ const prisma = new PrismaClient();
 
 // create a new tweet
 router.post('/', async (req, res) => {
-	const { content, image, userId } = req.body;
+	const { content, image } = req.body;
+	// @ts-ignore
+	const user = req.user;
 
 	try {
 		const result = await prisma.tweet.create({
 			data: {
 				content,
 				image,
-				userId, // TODO manage based on the auth user
+				userId: user.id,
 			},
 		});
 
@@ -46,7 +48,7 @@ router.get('/:id', async (req, res) => {
 	const { id } = req.params;
 
 	const tweet = await prisma.tweet.findUnique({
-		where: { id: Number(id) },
+		where: { id: id },
 		include: {
 			user: true,
 		},
@@ -63,7 +65,7 @@ router.put('/:id', async (req, res) => {
 
 	try {
 		const result = await prisma.tweet.update({
-			where: { id: Number(id) },
+			where: { id: id },
 			data: { content, image },
 		});
 
@@ -77,7 +79,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
 	const { id } = req.params;
 
-	await prisma.tweet.delete({ where: { id: Number(id) } });
+	await prisma.tweet.delete({ where: { id: id } });
 
 	res.sendStatus(200);
 });
