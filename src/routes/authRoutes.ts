@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import { sendEmailToken } from '../services/emailService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -48,6 +49,8 @@ router.post('/login', async (req, res) => {
 		console.log(token);
 
 		// send email token to the email
+		await sendEmailToken(email, emailToken);
+		res.sendStatus(200);
 	} catch (err) {
 		res.status(400).json({ error: 'Generated email token is not unique.' });
 	}
