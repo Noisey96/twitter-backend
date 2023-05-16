@@ -33,7 +33,7 @@ router.post('/login', async (req, res) => {
 	const emailToken = generateEmailToken();
 	const expiration = new Date(new Date().getTime() + EMAIL_TOKEN_EXPIRATION_MINUTES * 60 * 1000);
 	try {
-		const token = await prisma.token.create({
+		await prisma.token.create({
 			data: {
 				type: 'EMAIL',
 				emailToken,
@@ -46,7 +46,6 @@ router.post('/login', async (req, res) => {
 				},
 			},
 		});
-		console.log(token);
 
 		// send email token to the email
 		await sendEmailToken(email, emailToken);

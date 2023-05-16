@@ -6,6 +6,8 @@ const prisma = new PrismaClient();
 
 // create a new user
 router.post('/', async (req, res) => {
+	res.sendStatus(401);
+	/*
 	const { email, name, username } = req.body;
 
 	try {
@@ -22,6 +24,7 @@ router.post('/', async (req, res) => {
 	} catch (err) {
 		res.status(400).json({ error: 'Username and email should be unique.' });
 	}
+	*/
 });
 
 // list all users
@@ -48,6 +51,11 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
 	const { id } = req.params;
 	const { name, image, bio } = req.body;
+	// @ts-ignore
+	const user = req.user;
+
+	// determine whether the logged in user is being updated
+	if (user.id !== id) return res.status(401).json({ message: 'You are not allowed to update this user' });
 
 	try {
 		const result = await prisma.user.update({
@@ -64,6 +72,11 @@ router.put('/:id', async (req, res) => {
 // delete one user
 router.delete('/:id', async (req, res) => {
 	const { id } = req.params;
+	// @ts-ignore
+	const user = req.user;
+
+	// determine whether the logged in user is being deleted
+	if (user.id !== id) return res.status(401).json({ message: 'You are not allowed to delete this user' });
 
 	try {
 		await prisma.user.delete({ where: { id: id } });
