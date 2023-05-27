@@ -4,5 +4,8 @@ node_modules/
 # environment
 .env
 
+# config
+*.config.*
+
 # database
 *.db
