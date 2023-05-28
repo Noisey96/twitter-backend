@@ -1,5 +1,8 @@
 import { Router } from 'express';
 
+import { tweets } from '../db/schema';
+import { db } from '../services/databaseService';
+
 const router = Router();
 
 // create a new tweet
@@ -9,14 +12,8 @@ router.post('/', async (req, res) => {
 	const user = req.user;
 
 	try {
-		const result = await prisma.tweet.create({
-			data: {
-				content,
-				image,
-				userId: user.id,
-			},
-			include: { user: true },
-		});
+		// TODO: return users within the result
+		const result = await db.insert(tweets).values({ content, image, userId: user.id }).returning();
 
 		res.json(result);
 	} catch (err) {
@@ -26,17 +23,8 @@ router.post('/', async (req, res) => {
 
 // list all tweets
 router.get('/', async (req, res) => {
-	const allTweets = await prisma.tweet.findMany({
-		include: {
-			user: {
-				select: {
-					id: true,
-					username: true,
-					name: true,
-					image: true,
-				},
-			},
-		},
+	const allTweets = await db.query.tweets.findMany({
+		with: { users: { columns: { id: true, username: true, name: true, image: true } } },
 	});
 
 	res.json(allTweets);

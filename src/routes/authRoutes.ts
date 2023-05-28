@@ -1,19 +1,12 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
-import { drizzle } from 'drizzle-orm/postgres-js';
 import { eq } from 'drizzle-orm';
-import postgres from 'postgres';
-import * as dotenv from 'dotenv';
 
 import { users, tokens } from '../db/schema';
 import { sendEmailToken } from '../services/emailService';
+import { db } from '../services/databaseService';
 
 const router = Router();
-
-dotenv.config();
-const { DATABASE_URL } = process.env;
-const queryClient = postgres(DATABASE_URL || '', { ssl: 'require' });
-const db = drizzle(queryClient);
 
 const EMAIL_TOKEN_EXPIRATION_MINUTES = 10;
 const AUTHENTICATION_EXPIRATION_HOURS = 12;
@@ -42,14 +35,10 @@ router.post('/login', async (req, res) => {
 	const emailToken = generateEmailToken();
 	const expiration = new Date(new Date().getTime() + EMAIL_TOKEN_EXPIRATION_MINUTES * 60 * 1000);
 	try {
-		const user = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
-		let userId = user[0].id;
-		if (!userId) {
-			await db.insert(users).values({ email }).returning({ userId: users.id });
-		}
-		await db
-			.insert(tokens)
-			.values({ type: 'EMAIL', emailToken: emailToken, expiration: expiration, userId: userId });
+		// generate user if email is new and generate email token
+		let userId = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1)[0].id;
+		if (!userId) userId = await db.insert(users).values({ email }).returning({ id: users.id })[0].id;
+		await db.insert(tokens).values({ type: 'EMAIL', emailToken, expiration, userId });
 
 		// send email token to the email
 		await sendEmailToken(email, emailToken);
@@ -64,35 +53,26 @@ router.post('/authenticate', async (req, res) => {
 	const { email, emailToken } = req.body;
 
 	// find email token on database
-	const dbEmailToken = await prisma.token.findUnique({
-		where: { emailToken },
-		include: { user: true },
+	const dbEmailToken = await db.query.tokens.findFirst({
+		where: eq(tokens.emailToken, emailToken),
+		columns: { id: true, valid: true, expiration: true },
+		with: { users: { columns: { id: true, email: true } } },
 	});
 
 	// validate given email and email token
 	if (!dbEmailToken || !dbEmailToken.valid) return res.sendStatus(401);
 	if (dbEmailToken.expiration < new Date()) return res.status(401).json({ error: 'Token expired!' });
-	if (dbEmailToken.user.email !== email) return res.sendStatus(401);
+	if (dbEmailToken.users.email !== email) return res.sendStatus(401);
 
 	// if valid, generate a API token
 	const expiration = new Date(new Date().getTime() + AUTHENTICATION_EXPIRATION_HOURS * 60 * 60 * 1000);
-	const apiToken = await prisma.token.create({
-		data: {
-			type: 'API',
-			expiration,
-			user: {
-				connect: {
-					email,
-				},
-			},
-		},
-	});
+	const apiToken = await db
+		.insert(tokens)
+		.values({ type: 'API', expiration, userId: dbEmailToken.users.id })
+		.returning({ id: tokens.id })[0].id;
 
 	// invalidate the email token
-	await prisma.token.update({
-		where: { id: dbEmailToken.id },
-		data: { valid: false },
-	});
+	await db.update(tokens).set({ valid: false }).where(eq(tokens.id, dbEmailToken.id));
 
 	// generate the JWT token
 	const authToken = generateAuthToken(apiToken.id);

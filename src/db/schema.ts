@@ -42,7 +42,7 @@ export const tokens = pgTable('tokens', {
 });
 
 export const tokensRelations = relations(tokens, ({ one }) => ({
-	user: one(users, {
+	users: one(users, {
 		fields: [tokens.userId],
 		references: [users.id],
 	}),
@@ -61,7 +61,7 @@ export const tweets = pgTable('tweets', {
 });
 
 export const tweetsRelations = relations(tweets, ({ one }) => ({
-	user: one(users, {
+	users: one(users, {
 		fields: [tweets.userId],
 		references: [users.id],
 	}),
