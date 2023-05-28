@@ -4,7 +4,8 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"generate": "drizzle-kit generate:pg --schema ./src/db/schema.ts --out ./migrations/",
+		"db:generate": "drizzle-kit generate:pg --schema ./src/db/schema.ts --out ./migrations/",
+		"db:deploy": "ts-node --files src/db/migrate.ts",
 		"dev": "nodemon src/index.ts"
 	},
 	"keywords": [],
