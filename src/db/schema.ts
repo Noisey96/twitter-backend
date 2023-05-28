@@ -1,4 +1,4 @@
-import { boolean, char, integer, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, char, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 /*
@@ -27,20 +27,18 @@ export const usersRelations = relations(users, ({ many }) => ({
 	tweets: many(tweets),
 }));
 
-const typeEnum = pgEnum('type', ['EMAIL', 'API']);
-
 export const tokens = pgTable('tokens', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	createdAt: timestamp('created_at').defaultNow(),
 	updatedAt: timestamp('updated_at').defaultNow(),
 
-	type: typeEnum('type'),
+	type: text('type').notNull(),
 	emailToken: char('email_token', { length: 6 }),
 
 	valid: boolean('valid').default(true),
 	expiration: timestamp('expiration').notNull(),
 
-	userId: integer('user_id').notNull(),
+	userId: uuid('user_id').notNull(),
 });
 
 export const tokensRelations = relations(tokens, ({ one }) => ({
@@ -59,7 +57,7 @@ export const tweets = pgTable('tweets', {
 	image: text('image'),
 	impression: integer('impression').default(0),
 
-	userId: integer('user_id').notNull(),
+	userId: uuid('user_id').notNull(),
 });
 
 export const tweetsRelations = relations(tweets, ({ one }) => ({

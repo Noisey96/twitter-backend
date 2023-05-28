@@ -1,30 +1,10 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // create a new user
 router.post('/', async (req, res) => {
 	res.sendStatus(401);
-	/*
-	const { email, name, username } = req.body;
-
-	try {
-		const result = await prisma.user.create({
-			data: {
-				email,
-				name,
-				username,
-				bio: "Hello, I'm new on Twitter",
-			},
-		});
-
-		res.json(result);
-	} catch (err) {
-		res.status(400).json({ error: 'Username and email should be unique.' });
-	}
-	*/
 });
 
 // list all users

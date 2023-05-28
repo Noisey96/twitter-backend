@@ -1,10 +1,19 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { eq } from 'drizzle-orm';
+import postgres from 'postgres';
+import * as dotenv from 'dotenv';
+
+import { users, tokens } from '../db/schema';
 import { sendEmailToken } from '../services/emailService';
 
 const router = Router();
-const prisma = new PrismaClient();
+
+dotenv.config();
+const { DATABASE_URL } = process.env;
+const queryClient = postgres(DATABASE_URL || '', { ssl: 'require' });
+const db = drizzle(queryClient);
 
 const EMAIL_TOKEN_EXPIRATION_MINUTES = 10;
 const AUTHENTICATION_EXPIRATION_HOURS = 12;
@@ -33,19 +42,14 @@ router.post('/login', async (req, res) => {
 	const emailToken = generateEmailToken();
 	const expiration = new Date(new Date().getTime() + EMAIL_TOKEN_EXPIRATION_MINUTES * 60 * 1000);
 	try {
-		await prisma.token.create({
-			data: {
-				type: 'EMAIL',
-				emailToken,
-				expiration,
-				user: {
-					connectOrCreate: {
-						where: { email },
-						create: { email },
-					},
-				},
-			},
-		});
+		const user = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+		let userId = user[0].id;
+		if (!userId) {
+			await db.insert(users).values({ email }).returning({ userId: users.id });
+		}
+		await db
+			.insert(tokens)
+			.values({ type: 'EMAIL', emailToken: emailToken, expiration: expiration, userId: userId });
 
 		// send email token to the email
 		await sendEmailToken(email, emailToken);
