@@ -1,4 +1,8 @@
 import { Router } from 'express';
+import { eq } from 'drizzle-orm';
+
+import { users } from '../db/schema';
+import { db } from '../services/databaseService';
 
 const router = Router();
 
@@ -9,7 +13,7 @@ router.post('/', async (req, res) => {
 
 // list all users
 router.get('/', async (req, res) => {
-	const allUsers = await prisma.user.findMany();
+	const allUsers = await db.query.users.findMany();
 
 	res.json(allUsers);
 });
@@ -18,12 +22,12 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
 	const { id } = req.params;
 
-	const user = await prisma.user.findUnique({
-		where: { id: id },
-		include: { tweets: true },
+	const user = await db.query.users.findFirst({
+		where: eq(users.id, id),
+		with: { tweets: true },
 	});
 
-	if (!user) return res.status(404).json({ error: `Tweet ${id} not found` });
+	if (!user) return res.status(404).json({ error: `User ${id} not found` });
 	res.json(user);
 });
 
@@ -38,10 +42,7 @@ router.put('/:id', async (req, res) => {
 	if (user.id !== id) return res.status(401).json({ message: 'You are not allowed to update this user' });
 
 	try {
-		const result = await prisma.user.update({
-			where: { id: id },
-			data: { bio, name, image },
-		});
+		const result = await db.update(users).set({ bio, name, image }).where(eq(users.id, id)).returning()[0];
 
 		res.json(result);
 	} catch (err) {
@@ -59,7 +60,8 @@ router.delete('/:id', async (req, res) => {
 	if (user.id !== id) return res.status(401).json({ message: 'You are not allowed to delete this user' });
 
 	try {
-		await prisma.user.delete({ where: { id: id } });
+		await db.delete(users).where(eq(users.id, id));
+
 		res.sendStatus(200);
 	} catch (err) {
 		res.status(400).json({ error: `Failed to delete user ${id}, because user has active tweets.` });

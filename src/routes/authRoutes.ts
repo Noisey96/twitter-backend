@@ -36,7 +36,7 @@ router.post('/login', async (req, res) => {
 	const expiration = new Date(new Date().getTime() + EMAIL_TOKEN_EXPIRATION_MINUTES * 60 * 1000);
 	try {
 		// generate user if email is new and generate email token
-		let userId = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1)[0].id;
+		let userId = await db.select({ id: users.id }).from(users).where(eq(users.email, email))[0].id;
 		if (!userId) userId = await db.insert(users).values({ email }).returning({ id: users.id })[0].id;
 		await db.insert(tokens).values({ type: 'EMAIL', emailToken, expiration, userId });
 
@@ -56,20 +56,20 @@ router.post('/authenticate', async (req, res) => {
 	const dbEmailToken = await db.query.tokens.findFirst({
 		where: eq(tokens.emailToken, emailToken),
 		columns: { id: true, valid: true, expiration: true },
-		with: { users: { columns: { id: true, email: true } } },
+		with: { user: { columns: { id: true, email: true } } },
 	});
 
 	// validate given email and email token
-	if (!dbEmailToken || !dbEmailToken.valid) return res.sendStatus(401);
+	if (!dbEmailToken?.valid) return res.sendStatus(401);
 	if (dbEmailToken.expiration < new Date()) return res.status(401).json({ error: 'Token expired!' });
-	if (dbEmailToken.users.email !== email) return res.sendStatus(401);
+	if (dbEmailToken.user.email !== email) return res.sendStatus(401);
 
 	// if valid, generate a API token
 	const expiration = new Date(new Date().getTime() + AUTHENTICATION_EXPIRATION_HOURS * 60 * 60 * 1000);
 	const apiToken = await db
 		.insert(tokens)
-		.values({ type: 'API', expiration, userId: dbEmailToken.users.id })
-		.returning({ id: tokens.id })[0].id;
+		.values({ type: 'API', expiration, userId: dbEmailToken.user.id })
+		.returning({ id: tokens.id })[0];
 
 	// invalidate the email token
 	await db.update(tokens).set({ valid: false }).where(eq(tokens.id, dbEmailToken.id));

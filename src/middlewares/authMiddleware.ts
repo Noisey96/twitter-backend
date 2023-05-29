@@ -1,11 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient, User } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import { InferModel, eq } from 'drizzle-orm';
 
-const prisma = new PrismaClient();
+import { tokens, users } from '../db/schema';
+import { db } from '../services/databaseService';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'DEFAULT SECRET';
 
+type User = InferModel<typeof users, 'select'>;
 type AuthRequest = Request & { user?: User };
 
 export async function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
@@ -19,9 +21,9 @@ export async function authenticateToken(req: AuthRequest, res: Response, next: N
 		const payload = jwt.verify(jwtToken, JWT_SECRET) as { tokenId: string };
 
 		// find the equivalent DB token
-		const dbToken = await prisma.token.findUnique({
-			where: { id: payload.tokenId },
-			include: { user: true },
+		const dbToken = await db.query.tokens.findFirst({
+			where: eq(tokens.id, payload.tokenId),
+			with: { user: true },
 		});
 
 		// handle when DB token is invalid
