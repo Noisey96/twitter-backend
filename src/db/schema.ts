@@ -17,7 +17,7 @@ export const users = pgTable('users', {
 
 	username: text('username'),
 	name: text('name'),
-	image: text('name'),
+	image: text('image'),
 	bio: text('bio'),
 	isVerified: boolean('is_verified').default(false),
 });
@@ -38,7 +38,9 @@ export const tokens = pgTable('tokens', {
 	valid: boolean('valid').default(true),
 	expiration: timestamp('expiration').notNull(),
 
-	userId: uuid('user_id').notNull(),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => users.id),
 });
 
 export const tokensRelations = relations(tokens, ({ one }) => ({
@@ -57,7 +59,9 @@ export const tweets = pgTable('tweets', {
 	image: text('image'),
 	impression: integer('impression').default(0),
 
-	userId: uuid('user_id').notNull(),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => users.id),
 });
 
 export const tweetsRelations = relations(tweets, ({ one }) => ({

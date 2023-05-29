@@ -6,17 +6,18 @@ import { db } from '../services/databaseService';
 
 const router = Router();
 
-// create a new tweet
+// creates a new tweet
 router.post('/', async (req, res) => {
 	const { content, image } = req.body;
 	// @ts-ignore
 	const user = req.user;
 
 	try {
-		const tweetId = await db
+		const insertedTweets = await db
 			.insert(tweets)
 			.values({ content, image, userId: user.id })
-			.returning({ id: tweets.id })[0].id;
+			.returning({ id: tweets.id });
+		const tweetId = insertedTweets[0].id;
 		const result = await db.query.tweets.findFirst({
 			where: eq(tweets.id, tweetId),
 			with: { user: true },
@@ -27,7 +28,7 @@ router.post('/', async (req, res) => {
 	}
 });
 
-// list all tweets
+// lists all tweets
 router.get('/', async (req, res) => {
 	const allTweets = await db.query.tweets.findMany({
 		with: { user: { columns: { id: true, username: true, name: true, image: true } } },
@@ -36,7 +37,7 @@ router.get('/', async (req, res) => {
 	res.json(allTweets);
 });
 
-// get one tweet
+// gets one tweet
 router.get('/:id', async (req, res) => {
 	const { id } = req.params;
 
@@ -49,14 +50,14 @@ router.get('/:id', async (req, res) => {
 	res.json(tweet);
 });
 
-// update one tweet
+// updates one tweet
 router.put('/:id', async (req, res) => {
 	const { id } = req.params;
 	const { content, image } = req.body;
 	// @ts-ignore
 	const user = req.user;
 
-	// determine whether the logged in user is updating one of their tweets
+	// determines whether the logged in user is updating one of their tweets
 	const tweet = await db.query.tweets.findFirst({
 		where: eq(tweets.id, id),
 		with: { user: { columns: { id: true } } },
@@ -64,21 +65,22 @@ router.put('/:id', async (req, res) => {
 	if (user.id !== tweet?.user.id) return res.status(404).json({ error: 'You are not allowed to update this tweet' });
 
 	try {
-		const result = await db.update(tweets).set({ content, image }).where(eq(tweets.id, id)).returning()[0];
+		const updatedTweets = await db.update(tweets).set({ content, image }).where(eq(tweets.id, id)).returning();
+		const updatedTweet = updatedTweets[0];
 
-		res.json(result);
+		res.json(updatedTweet);
 	} catch (err) {
 		res.status(400).json({ error: `Failed to update tweet ${id}` });
 	}
 });
 
-// delete one tweet
+// deletes one tweet
 router.delete('/:id', async (req, res) => {
 	const { id } = req.params;
 	// @ts-ignore
 	const user = req.user;
 
-	// determine whether the logged in user is deleting one of their tweets
+	// determines whether the logged in user is deleting one of their tweets
 	const tweet = await db.query.tweets.findFirst({
 		where: eq(tweets.id, id),
 		with: { user: { columns: { id: true } } },

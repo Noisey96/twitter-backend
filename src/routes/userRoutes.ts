@@ -1,24 +1,24 @@
 import { Router } from 'express';
 import { eq } from 'drizzle-orm';
 
-import { users } from '../db/schema';
+import { users, tokens, tweets } from '../db/schema';
 import { db } from '../services/databaseService';
 
 const router = Router();
 
-// create a new user
+// creates a new user
 router.post('/', async (req, res) => {
 	res.sendStatus(401);
 });
 
-// list all users
+// lists all users
 router.get('/', async (req, res) => {
 	const allUsers = await db.query.users.findMany();
 
 	res.json(allUsers);
 });
 
-// get one user
+// gets one user
 router.get('/:id', async (req, res) => {
 	const { id } = req.params;
 
@@ -31,7 +31,7 @@ router.get('/:id', async (req, res) => {
 	res.json(user);
 });
 
-// update one user
+// updates one user
 router.put('/:id', async (req, res) => {
 	const { id } = req.params;
 	const { name, image, bio } = req.body;
@@ -42,15 +42,16 @@ router.put('/:id', async (req, res) => {
 	if (user.id !== id) return res.status(401).json({ message: 'You are not allowed to update this user' });
 
 	try {
-		const result = await db.update(users).set({ bio, name, image }).where(eq(users.id, id)).returning()[0];
+		const updatedUsers = await db.update(users).set({ bio, name, image }).where(eq(users.id, id)).returning();
+		const updatedUser = updatedUsers[0];
 
-		res.json(result);
+		res.json(updatedUser);
 	} catch (err) {
 		res.status(400).json({ error: `Failed to update user ${id}` });
 	}
 });
 
-// delete one user
+// deletes one user along with their tokens and tweets
 router.delete('/:id', async (req, res) => {
 	const { id } = req.params;
 	// @ts-ignore
@@ -60,6 +61,8 @@ router.delete('/:id', async (req, res) => {
 	if (user.id !== id) return res.status(401).json({ message: 'You are not allowed to delete this user' });
 
 	try {
+		await db.delete(tokens).where(eq(tokens.userId, id));
+		await db.delete(tweets).where(eq(tweets.userId, id));
 		await db.delete(users).where(eq(users.id, id));
 
 		res.sendStatus(200);
