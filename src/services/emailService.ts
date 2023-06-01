@@ -1,31 +1,20 @@
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import { SESClient, SendTemplatedEmailCommand } from '@aws-sdk/client-ses';
 
 const ses = new SESClient({});
 
-function createSendEmailCommand(toAddress: string, fromAddress: string, message: string) {
-	return new SendEmailCommand({
+function createTokenEmailCommand(toAddress: string, fromAddress: string, token: string) {
+	return new SendTemplatedEmailCommand({
 		Destination: {
 			ToAddresses: [toAddress],
 		},
 		Source: fromAddress,
-		Message: {
-			Subject: {
-				Charset: 'UTF-8',
-				Data: 'Your one-time password',
-			},
-			Body: {
-				Text: {
-					Charset: 'UTF-8',
-					Data: message,
-				},
-			},
-		},
+		Template: 'tokenEmail',
+		TemplateData: JSON.stringify({ token: token }),
 	});
 }
 
 export async function sendEmailToken(email: string, token: string) {
-	const message = `Your one-time password: ${token}`;
-	const command = createSendEmailCommand(email, 'fresh.dusk3190@fastmail.com', message);
+	const command = createTokenEmailCommand(email, 'fresh.dusk3190@fastmail.com', token);
 
 	try {
 		return await ses.send(command);

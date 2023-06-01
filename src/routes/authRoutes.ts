@@ -31,6 +31,8 @@ function generateAuthToken(tokenId: string): string {
 router.post('/login', async (req, res) => {
 	const { email } = req.body;
 
+	if (!email) return res.status(400).json({ error: 'No email provided' });
+
 	// generates email token
 	const emailToken = generateEmailToken();
 	const expiration = new Date(new Date().getTime() + EMAIL_TOKEN_EXPIRATION_MINUTES * 60 * 1000);
