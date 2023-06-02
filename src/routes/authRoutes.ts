@@ -81,7 +81,7 @@ router.post('/authenticate', async (req, res) => {
 
 	// generates the JWT token
 	const authToken = generateAuthToken(apiToken.id);
-	res.json(authToken);
+	res.json({ authToken });
 });
 
 export default router;
