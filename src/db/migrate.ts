@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 const { DATABASE_URL } = process.env;
+console.log(DATABASE_URL);
 
 const doMigration = async () => {
 	try {
