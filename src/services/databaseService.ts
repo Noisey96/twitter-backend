@@ -6,6 +6,6 @@ import * as schema from '../db/schema';
 
 dotenv.config();
 const { DATABASE_URL } = process.env;
-console.log(DATABASE_URL);
+
 const queryClient = postgres(DATABASE_URL || '', { ssl: 'require' });
 export const db = drizzle(queryClient, { schema });
