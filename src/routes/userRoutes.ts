@@ -18,6 +18,13 @@ router.get('/', async (req, res) => {
 	res.json(allUsers);
 });
 
+// gets current user
+router.get('/myself', async (req, res) => {
+	// @ts-ignore
+	const user = req.user;
+	res.json(user);
+});
+
 // gets one user
 router.get('/:id', async (req, res) => {
 	const { id } = req.params;
