@@ -12,3 +12,6 @@ migrations/
 # server
 *.pem
 *.ppk
+
+# emails
+.react-email/
