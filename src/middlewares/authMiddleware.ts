@@ -18,11 +18,11 @@ export async function authenticateToken(req: AuthRequest, res: Response, next: N
 
 	try {
 		// decodes the JWT token
-		const payload = jwt.verify(jwtToken, JWT_SECRET) as { tokenId: string };
+		const tokenId = jwt.verify(jwtToken, JWT_SECRET) as string;
 
 		// finds the equivalent DB token
 		const dbToken = await db.query.tokens.findFirst({
-			where: eq(tokens.id, payload.tokenId),
+			where: eq(tokens.id, tokenId),
 			with: { user: true },
 		});
 

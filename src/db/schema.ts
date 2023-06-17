@@ -1,13 +1,6 @@
 import { boolean, char, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-/*
-Loss in functionality compared to Prisma schema
-Check constraints are not yet implemented
-Unique constraints are not yet implemented
-UpdatedAt is not yet implemented
-*/
-
 export const users = pgTable('users', {
 	id: uuid('id').defaultRandom().primaryKey(),
 	createdAt: timestamp('created_at').defaultNow(),
@@ -19,7 +12,6 @@ export const users = pgTable('users', {
 	name: text('name'),
 	image: text('image'),
 	bio: text('bio'),
-	isVerified: boolean('is_verified').default(false),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({

@@ -18,3 +18,6 @@ migrations/
 
 # logs
 logs/
+
+# misc
+future.txt

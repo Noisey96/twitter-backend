@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 import { users, tokens } from '../db/schema';
 import { sendEmailToken } from '../services/emailService';
@@ -13,12 +14,12 @@ const AUTHENTICATION_EXPIRATION_HOURS = 12;
 const JWT_SECRET = process.env.JWT_SECRET || 'DEFAULT SECRET';
 
 // Gnerates a random 6 digit number as the email token
-function generateEmailToken(): string {
+function generateEmailToken() {
 	return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 // Generates JWT token
-function generateAuthToken(tokenId: string): string {
+function generateAuthToken(tokenId: string) {
 	const jwtPayload = { tokenId };
 
 	return jwt.sign(jwtPayload, JWT_SECRET, {
@@ -27,11 +28,17 @@ function generateAuthToken(tokenId: string): string {
 	});
 }
 
+const loginSchema = z.string().email();
+
 // Creates a new user or initiate login process for existing users
 router.post('/login', async (req, res) => {
+	// validates provided email
 	const { email } = req.body;
-
-	if (!email) return res.status(400).json({ error: 'No email provided' });
+	try {
+		loginSchema.parse(email);
+	} catch (_) {
+		return res.status(400).json({ error: 'Cannot login' });
+	}
 
 	// generates email token
 	const emailToken = generateEmailToken();
@@ -46,15 +53,25 @@ router.post('/login', async (req, res) => {
 		// sends email token to the email
 		await sendEmailToken(email, emailToken);
 		res.sendStatus(200);
-	} catch (err) {
-		res.status(400).json({ error: 'Generated email token is not unique.' });
+	} catch (_) {
+		res.status(400).json({ error: 'Cannot login' });
 	}
+});
+
+const authenticateSchema = z.object({
+	email: z.string().email(),
+	emailToken: z.string().length(6),
 });
 
 // Validates the login process
 router.post('/authenticate', async (req, res) => {
+	// validates provided email and email token
 	const { email, emailToken } = req.body;
-	if (!email || !emailToken) return res.sendStatus(401);
+	try {
+		authenticateSchema.parse({ email, emailToken });
+	} catch (_) {
+		return res.sendStatus(401);
+	}
 
 	// finds email token on database
 	const dbEmailToken = await db.query.tokens.findFirst({
@@ -65,7 +82,7 @@ router.post('/authenticate', async (req, res) => {
 
 	// validates given email and email token
 	if (!dbEmailToken?.valid) return res.sendStatus(401);
-	if (dbEmailToken.expiration < new Date()) return res.status(401).json({ error: 'Token expired!' });
+	if (dbEmailToken.expiration < new Date()) return res.sendStatus(401);
 	if (dbEmailToken.user.email !== email) return res.sendStatus(401);
 
 	// if valid, generates a API token
