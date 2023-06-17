@@ -41,7 +41,7 @@ router.post('/login', async (req, res) => {
 		let intendedUsers = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
 		if (!intendedUsers.length) intendedUsers = await db.insert(users).values({ email }).returning({ id: users.id });
 		const userId = intendedUsers[0].id;
-		await db.insert(tokens).values({ type: 'EMAIL', emailToken, expiration, userId });
+		await db.insert(tokens).values({ tokenType: 'EMAIL', emailToken, expiration, userId });
 
 		// sends email token to the email
 		await sendEmailToken(email, emailToken);
@@ -72,7 +72,7 @@ router.post('/authenticate', async (req, res) => {
 	const expiration = new Date(new Date().getTime() + AUTHENTICATION_EXPIRATION_HOURS * 60 * 60 * 1000);
 	const apiTokens = await db
 		.insert(tokens)
-		.values({ type: 'API', expiration, userId: dbEmailToken.user.id })
+		.values({ tokenType: 'API', expiration, userId: dbEmailToken.user.id })
 		.returning({ id: tokens.id });
 	const apiToken = apiTokens[0];
 

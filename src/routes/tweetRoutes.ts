@@ -31,7 +31,9 @@ router.post('/', async (req, res) => {
 // lists all tweets
 router.get('/', async (req, res) => {
 	const allTweets = await db.query.tweets.findMany({
-		with: { user: { columns: { id: true, username: true, name: true, image: true } } },
+		with: {
+			user: { columns: { id: true, username: true, name: true, image: true } },
+		},
 	});
 
 	res.json(allTweets);

@@ -1,10 +1,10 @@
-import { boolean, char, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, char, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 /*
 Loss in functionality compared to Prisma schema
-ENUM does not work
-UNIQUE check is not yet implemented
+Check constraints are not yet implemented
+Unique constraints are not yet implemented
 UpdatedAt is not yet implemented
 */
 
@@ -32,7 +32,7 @@ export const tokens = pgTable('tokens', {
 	createdAt: timestamp('created_at').defaultNow(),
 	updatedAt: timestamp('updated_at').defaultNow(),
 
-	type: text('type').notNull(),
+	tokenType: text('token_type').notNull(),
 	emailToken: char('email_token', { length: 6 }),
 
 	valid: boolean('valid').default(true),
@@ -57,7 +57,6 @@ export const tweets = pgTable('tweets', {
 
 	content: text('content').notNull(),
 	image: text('image'),
-	impression: integer('impression').default(0),
 
 	userId: uuid('user_id')
 		.notNull()

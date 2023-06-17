@@ -27,7 +27,7 @@ export async function authenticateToken(req: AuthRequest, res: Response, next: N
 		});
 
 		// handles when DB token is invalid
-		if (!dbToken || dbToken.type !== 'API' || !dbToken.valid || dbToken.expiration < new Date())
+		if (!dbToken || dbToken.tokenType !== 'API' || !dbToken.valid || dbToken.expiration < new Date())
 			return res.sendStatus(401);
 
 		// handles when DB token is valid
