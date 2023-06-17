@@ -1,7 +1,7 @@
 import { render } from '@react-email/render';
 import { SES } from '@aws-sdk/client-ses';
 
-import TokenEmail from '../../emails/TokenEmail';
+import { TokenEmail } from '../../emails/TokenEmail';
 
 const ses = new SES({});
 
