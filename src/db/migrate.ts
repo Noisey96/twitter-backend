@@ -3,7 +3,7 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
 import * as dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ path: '.dev.vars' });
 const { DATABASE_URL } = process.env;
 
 const doMigration = async () => {
@@ -11,11 +11,10 @@ const doMigration = async () => {
 		const migrationClient = postgres(DATABASE_URL || '', { max: 1, ssl: 'require' });
 		await migrate(drizzle(migrationClient), { migrationsFolder: './migrations' });
 		console.log('Migration completed!');
-		process.exit(0);
 	} catch (err) {
 		console.log(err);
-		process.exit(0);
 	}
+	process.exit(0);
 };
 
 doMigration();

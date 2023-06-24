@@ -4,6 +4,7 @@ build/
 
 # environment
 .env
+*.vars
 
 # database
 *.db
@@ -21,3 +22,4 @@ logs/
 
 # misc
 future.txt
+reference/
