@@ -60,7 +60,7 @@ router.put('/:id', async (c) => {
 router.delete('/:id', async (c) => {
 	const { id } = c.req.param();
 
-	// TODO - validate updated user = logged in user
+	// TODO - validate deleted user = logged in user
 
 	try {
 		const db = connectToDatabase(c.env.DATABASE_URL);
