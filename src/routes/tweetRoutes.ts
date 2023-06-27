@@ -85,7 +85,7 @@ router.delete('/:id', async (c) => {
 		await db.delete(tweets).where(eq(tweets.id, id)).returning();
 
 		c.status(200);
-		return c.text('Ok');
+		return c.text('OK');
 	} catch (err) {
 		throw new HTTPException(400, { message: 'Cannot delete tweet' });
 	}
