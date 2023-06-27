@@ -21,8 +21,11 @@ router.get('/', async (c) => {
 	return c.json(allUsers);
 });
 
-// gets current user - TODO
-router.get('/myself', async (c) => {});
+// gets current user
+router.get('/myself', async (c) => {
+	const user = c.get('user');
+	return c.json(user);
+});
 
 // gets one user
 router.get('/:id', async (c) => {
@@ -42,8 +45,10 @@ router.get('/:id', async (c) => {
 router.put('/:id', async (c) => {
 	const { id } = c.req.param();
 	const { name, image, bio } = await c.req.json();
+	const user = c.get('user');
 
-	// TODO - validate updated user = logged in user
+	// validate updated user = logged in user
+	if (user.id !== id) throw new HTTPException(401, { message: 'Unauthorized' });
 
 	try {
 		const db = connectToDatabase(c.env.DATABASE_URL);
@@ -59,8 +64,10 @@ router.put('/:id', async (c) => {
 // deletes one user along with their tweets and tokens
 router.delete('/:id', async (c) => {
 	const { id } = c.req.param();
+	const user = c.get('user');
 
-	// TODO - validate deleted user = logged in user
+	// validate deleted user = logged in user
+	if (user.id !== id) throw new HTTPException(401, { message: 'Unauthorized' });
 
 	try {
 		const db = connectToDatabase(c.env.DATABASE_URL);

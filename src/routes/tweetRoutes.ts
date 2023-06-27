@@ -10,8 +10,8 @@ const router = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // creates a new tweet
 router.post('/', async (c) => {
-	const { user, content, image } = await c.req.json();
-	// TODO - add user via auth
+	const { content, image } = await c.req.json();
+	const user = c.get('user');
 
 	try {
 		const db = connectToDatabase(c.env.DATABASE_URL);
@@ -60,11 +60,18 @@ router.get('/:id', async (c) => {
 router.put('/:id', async (c) => {
 	const { id } = c.req.param();
 	const { content, image } = await c.req.json();
-
-	// TODO - validate updated tweet belongs to logged in user
+	const user = c.get('user');
 
 	try {
+		// validate updated tweet belongs to logged in user
 		const db = connectToDatabase(c.env.DATABASE_URL);
+		const tweet = await db.query.tweets.findFirst({
+			where: eq(tweets.id, id),
+			with: { user: { columns: { id: true } } },
+		});
+		if (user.id !== tweet?.user.id) throw new HTTPException(401, { message: 'Unauthorized' });
+
+		// updates tweet
 		const updatedTweets = await db.update(tweets).set({ content, image }).where(eq(tweets.id, id)).returning();
 		const updatedTweet = updatedTweets[0];
 
@@ -77,11 +84,18 @@ router.put('/:id', async (c) => {
 // deletes one tweet
 router.delete('/:id', async (c) => {
 	const { id } = c.req.param();
-
-	// TODO - validate deleted tweet belongs to logged in user
+	const user = c.get('user');
 
 	try {
+		// validate deleted tweet belongs to logged in user
 		const db = connectToDatabase(c.env.DATABASE_URL);
+		const tweet = await db.query.tweets.findFirst({
+			where: eq(tweets.id, id),
+			with: { user: { columns: { id: true } } },
+		});
+		if (user.id !== tweet?.user.id) throw new HTTPException(401, { message: 'Unauthorized' });
+
+		// deletes tweet
 		await db.delete(tweets).where(eq(tweets.id, id)).returning();
 
 		c.status(200);
