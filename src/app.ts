@@ -23,12 +23,12 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 app.notFound((c) => c.json({ message: 'Not Found', ok: false }, 404));
 
-app.use('/tweet/*', authenticateToken);
-app.use('/user/*', authenticateToken);
+app.use('/tweet', authenticateToken);
+app.use('/user', authenticateToken);
 
-app.route('/auth/', authRoutes);
-app.route('/tweet/', tweetRoutes);
-app.route('/user/', userRoutes);
+app.route('/auth', authRoutes);
+app.route('/tweet', tweetRoutes);
+app.route('/user', userRoutes);
 
 app.get('/', (c) => {
 	return c.json({ message: 'Hello World!' });

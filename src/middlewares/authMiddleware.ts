@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import * as jwt from 'jsonwebtoken';
+import * as jose from 'jose';
 import { eq } from 'drizzle-orm';
 
 import { connectToDatabase } from '../services/databaseService';
@@ -14,12 +14,15 @@ export async function authenticateToken(c: Context, next: () => Promise<void>) {
 
 	try {
 		// decodes JWT token
-		const payload = jwt.verify(jwtToken, c.env.JWT_SECRET) as { tokenId: string };
+		const jwtSecret = new TextEncoder().encode(c.env.JWT_SECRET);
+		const { payload } = await jose.jwtVerify(jwtToken, jwtSecret);
+		const tokenId = payload.tokenId as string;
+		if (!tokenId) throw new HTTPException(401, { message: 'Unauthorized' });
 
 		// finds equivalent DB token
 		const db = connectToDatabase(c.env.DATABASE_URL);
 		const dbToken = await db.query.tokens.findFirst({
-			where: eq(tokens.id, payload.tokenId),
+			where: eq(tokens.id, tokenId),
 			with: { user: true },
 		});
 

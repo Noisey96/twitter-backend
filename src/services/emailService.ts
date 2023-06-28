@@ -3,9 +3,14 @@ import { SES } from '@aws-sdk/client-ses';
 
 import { TokenEmail } from '../../emails/TokenEmail';
 
-const ses = new SES({});
-
-export async function sendEmailToken(email: string, token: string) {
+export async function sendEmailToken(
+	email: string,
+	token: string,
+	accessKeyId: string,
+	secretAccessKey: string,
+	region: string,
+) {
+	const ses = new SES({ credentials: { accessKeyId, secretAccessKey }, region });
 	const html = render(TokenEmail({ token }));
 	const text = render(TokenEmail({ token }), { plainText: true });
 

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import jwt from 'jsonwebtoken';
+import * as jose from 'jose';
 import { eq } from 'drizzle-orm';
 
 import { Env, Variables } from '../app';
@@ -17,13 +17,10 @@ function generateEmailToken() {
 }
 
 // generates JWT token
-function generateAuthToken(tokenId: string, jwtSecret: string) {
+async function generateAuthToken(tokenId: string, secret: string) {
 	const jwtPayload = { tokenId };
-
-	return jwt.sign(jwtPayload, jwtSecret, {
-		algorithm: 'HS256',
-		noTimestamp: true,
-	});
+	const jwtSecret = new TextEncoder().encode(secret);
+	return await new jose.SignJWT(jwtPayload).setProtectedHeader({ alg: 'HS256' }).sign(jwtSecret);
 }
 
 const router = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -45,7 +42,7 @@ router.post('/login', async (c) => {
 		await db.insert(tokens).values({ tokenType: 'EMAIL', emailToken, expiration, userId });
 
 		// sends email token to the email
-		await sendEmailToken(email, emailToken);
+		await sendEmailToken(email, emailToken, c.env.AWS_ACCESS_KEY_ID, c.env.AWS_SECRET_ACCESS_KEY, c.env.AWS_REGION);
 		c.status(200);
 		return c.text('OK');
 	} catch (err) {
@@ -84,7 +81,7 @@ router.post('/authenticate', async (c) => {
 		await db.update(tokens).set({ valid: false }).where(eq(tokens.id, dbEmailToken.id));
 
 		// generates the JWT token
-		const authToken = generateAuthToken(apiToken.id, c.env.JWT_SECRET);
+		const authToken = await generateAuthToken(apiToken.id, c.env.JWT_SECRET);
 		return c.json({ authToken });
 	} catch (err) {
 		throw new HTTPException(400, { message: 'Cannot authenticate' });
