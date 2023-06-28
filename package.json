@@ -2,6 +2,7 @@
 	"name": "twitter-clone-backend",
 	"version": "0.1.0",
 	"scripts": {
+		"preinstall": "npx only-allow pnpm",
 		"email": "email dev",
 		"db:generate": "drizzle-kit generate:pg --schema ./src/db/schema.ts --out ./migrations/",
 		"db:deploy": "tsx src/db/migrate.ts",
