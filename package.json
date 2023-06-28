@@ -6,7 +6,7 @@
 		"db:generate": "drizzle-kit generate:pg --schema ./src/db/schema.ts --out ./migrations/",
 		"db:deploy": "tsx src/db/migrate.ts",
 		"dev": "wrangler dev",
-		"deploy": "wrangler publish"
+		"deploy": "wrangler deploy"
 	},
 	"dependencies": {
 		"@aws-sdk/client-ses": "^3.332.0",
