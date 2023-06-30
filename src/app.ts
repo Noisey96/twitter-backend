@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { sentry } from '@hono/sentry';
 import { InferModel } from 'drizzle-orm';
 
 import authRoutes from './routes/authRoutes';
@@ -8,6 +9,7 @@ import { users } from './db/schema';
 import { authenticateToken } from './middlewares/authMiddleware';
 
 export type Env = {
+	SENTRY_DSN: string;
 	DATABASE_URL: string;
 	JWT_SECRET: string;
 	AWS_ACCESS_KEY_ID: string;
@@ -20,6 +22,11 @@ export type Variables = {
 };
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
+
+app.use('*', async (c, next) => {
+	const logging = sentry({ dsn: c.env.SENTRY_DSN });
+	await logging(c, next);
+});
 
 app.notFound((c) => c.json({ message: 'Not Found', ok: false }, 404));
 

@@ -11,6 +11,7 @@
 	},
 	"dependencies": {
 		"@aws-sdk/client-ses": "^3.332.0",
+		"@hono/sentry": "^0.2.1",
 		"@neondatabase/serverless": "^0.4.8",
 		"@react-email/components": "0.0.6",
 		"@react-email/render": "^0.0.7",
