@@ -10,6 +10,7 @@ import { authenticateToken } from './middlewares/authMiddleware';
 
 export type Env = {
 	SENTRY_DSN: string;
+	SENTRY_ENVIRONMENT: string;
 	DATABASE_URL: string;
 	JWT_SECRET: string;
 	AWS_ACCESS_KEY_ID: string;
@@ -24,7 +25,7 @@ export type Variables = {
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 app.use('*', async (c, next) => {
-	const logging = sentry({ dsn: c.env.SENTRY_DSN });
+	const logging = sentry({ dsn: c.env.SENTRY_DSN, environment: c.env.SENTRY_ENVIRONMENT });
 	await logging(c, next);
 });
 

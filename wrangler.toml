@@ -5,6 +5,16 @@ compatibility_date = "2023-06-23"
 [placement]
 mode = "smart"
 
+# The necessary secrets are:
+# - SENTRY_DSN
+# - SENTRY_ENVIRONMENT
+# - DATABASE_URL
+# - JWT_SECRET
+# - AWS_ACCESS_KEY_ID
+# - AWS_SECRET_ACCESS_KEY
+# - AWS_REGION
+# Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
+
 # Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)
 # Note: Use secrets to store sensitive data.
 # Docs: https://developers.cloudflare.com/workers/platform/environment-variables
