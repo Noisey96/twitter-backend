@@ -34,7 +34,12 @@ router.get('/:id', async (c) => {
 	const db = connectToDatabase(c.env.DATABASE_URL);
 	const user = await db.query.users.findFirst({
 		where: eq(users.id, id),
-		with: { tweets: true },
+		with: {
+			tweets: {
+				columns: { id: true, content: true, image: true },
+				with: { user: { columns: { id: true, username: true, name: true, image: true } } },
+			},
+		},
 	});
 
 	if (!user) throw new HTTPException(404, { message: 'Cannot get user' });

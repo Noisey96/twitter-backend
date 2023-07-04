@@ -22,7 +22,7 @@ router.post('/', async (c) => {
 		const tweetId = insertedTweets[0].id;
 		const result = await db.query.tweets.findFirst({
 			where: eq(tweets.id, tweetId),
-			with: { user: true },
+			with: { user: { columns: { id: true, username: true, name: true, image: true } } },
 		});
 		return c.json(result);
 	} catch (err) {
@@ -49,7 +49,7 @@ router.get('/:id', async (c) => {
 	const db = connectToDatabase(c.env.DATABASE_URL);
 	const tweet = await db.query.tweets.findFirst({
 		where: eq(tweets.id, id),
-		with: { user: true },
+		with: { user: { columns: { id: true, username: true, name: true, image: true } } },
 	});
 
 	if (!tweet) throw new HTTPException(404, { message: 'Cannot get tweet' });
