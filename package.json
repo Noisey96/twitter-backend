@@ -12,16 +12,14 @@
 	"dependencies": {
 		"@aws-sdk/client-ses": "^3.332.0",
 		"@hono/sentry": "^0.2.1",
-		"@neondatabase/serverless": "^0.4.8",
+		"@neondatabase/serverless": "^0.5.2",
 		"@react-email/components": "0.0.6",
 		"@react-email/render": "^0.0.7",
-		"drizzle-orm": "^0.26.1",
-		"drizzle-zod": "^0.4.4",
+		"drizzle-orm": "^0.27.2",
 		"hono": "^3.2.6",
 		"jose": "^4.14.4",
 		"react": "^18.2.0",
-		"react-email": "1.9.3-canary.0",
-		"zod": "^3.21.4"
+		"react-email": "1.9.4"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20230518.0",
@@ -30,7 +28,7 @@
 		"@types/pg": "^8.10.1",
 		"@types/react": "^18.2.12",
 		"dotenv": "^16.3.1",
-		"drizzle-kit": "^0.18.1",
+		"drizzle-kit": "^0.19.5",
 		"postgres": "^3.3.5",
 		"prettier": "^2.8.8",
 		"prettier-plugin-tailwindcss": "^0.3.0",

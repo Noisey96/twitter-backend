@@ -3,7 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import { eq } from 'drizzle-orm';
 
 import { Env, Variables } from '../app';
-import { connectToDatabase } from '../services/databaseService';
+import { connectToDatabaseViaHTTP, connectToDatabaseViaWebSockets } from '../services/databaseService';
 import { tokens, tweets, users } from '../db/schema';
 
 const router = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -15,7 +15,7 @@ router.post('/', async (c) => {
 
 // lists all users
 router.get('/', async (c) => {
-	const db = connectToDatabase(c.env.DATABASE_URL);
+	const db = connectToDatabaseViaHTTP(c.env.DATABASE_URL);
 	const allUsers = await db.query.users.findMany();
 
 	return c.json(allUsers);
@@ -31,13 +31,12 @@ router.get('/myself', async (c) => {
 router.get('/:id', async (c) => {
 	const { id } = c.req.param();
 
-	const db = connectToDatabase(c.env.DATABASE_URL);
+	const db = connectToDatabaseViaHTTP(c.env.DATABASE_URL);
 	const user = await db.query.users.findFirst({
 		where: eq(users.id, id),
 		with: {
 			tweets: {
 				columns: { id: true, content: true, image: true },
-				with: { user: { columns: { id: true, username: true, name: true, image: true } } },
 			},
 		},
 	});
@@ -56,7 +55,7 @@ router.put('/:id', async (c) => {
 	if (user.id !== id) throw new HTTPException(401, { message: 'Unauthorized' });
 
 	try {
-		const db = connectToDatabase(c.env.DATABASE_URL);
+		const db = connectToDatabaseViaHTTP(c.env.DATABASE_URL);
 		const updatedUsers = await db.update(users).set({ bio, name, image }).where(eq(users.id, id)).returning();
 		const updatedUser = updatedUsers[0];
 
@@ -75,7 +74,7 @@ router.delete('/:id', async (c) => {
 	if (user.id !== id) throw new HTTPException(401, { message: 'Unauthorized' });
 
 	try {
-		const db = connectToDatabase(c.env.DATABASE_URL);
+		const db = connectToDatabaseViaWebSockets(c.env.DATABASE_URL);
 		await db.delete(tokens).where(eq(tokens.userId, id));
 		await db.delete(tweets).where(eq(tweets.userId, id));
 		await db.delete(users).where(eq(users.id, id));

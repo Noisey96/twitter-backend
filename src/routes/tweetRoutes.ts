@@ -3,7 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import { eq } from 'drizzle-orm';
 
 import { Env, Variables } from '../app';
-import { connectToDatabase } from '../services/databaseService';
+import { connectToDatabaseViaHTTP, connectToDatabaseViaWebSockets } from '../services/databaseService';
 import { tweets } from '../../src/db/schema';
 
 const router = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -14,7 +14,7 @@ router.post('/', async (c) => {
 	const user = c.get('user');
 
 	try {
-		const db = connectToDatabase(c.env.DATABASE_URL);
+		const db = connectToDatabaseViaWebSockets(c.env.DATABASE_URL);
 		const insertedTweets = await db
 			.insert(tweets)
 			.values({ content, image, userId: user.id })
@@ -32,7 +32,7 @@ router.post('/', async (c) => {
 
 // lists all tweets
 router.get('/', async (c) => {
-	const db = connectToDatabase(c.env.DATABASE_URL);
+	const db = connectToDatabaseViaHTTP(c.env.DATABASE_URL);
 	const allTweets = await db.query.tweets.findMany({
 		with: {
 			user: { columns: { id: true, username: true, name: true, image: true } },
@@ -46,7 +46,7 @@ router.get('/', async (c) => {
 router.get('/:id', async (c) => {
 	const { id } = c.req.param();
 
-	const db = connectToDatabase(c.env.DATABASE_URL);
+	const db = connectToDatabaseViaHTTP(c.env.DATABASE_URL);
 	const tweet = await db.query.tweets.findFirst({
 		where: eq(tweets.id, id),
 		with: { user: { columns: { id: true, username: true, name: true, image: true } } },
@@ -64,7 +64,7 @@ router.put('/:id', async (c) => {
 
 	try {
 		// validate updated tweet belongs to logged in user
-		const db = connectToDatabase(c.env.DATABASE_URL);
+		const db = connectToDatabaseViaWebSockets(c.env.DATABASE_URL);
 		const tweet = await db.query.tweets.findFirst({
 			where: eq(tweets.id, id),
 			with: { user: { columns: { id: true } } },
@@ -88,7 +88,7 @@ router.delete('/:id', async (c) => {
 
 	try {
 		// validate deleted tweet belongs to logged in user
-		const db = connectToDatabase(c.env.DATABASE_URL);
+		const db = connectToDatabaseViaWebSockets(c.env.DATABASE_URL);
 		const tweet = await db.query.tweets.findFirst({
 			where: eq(tweets.id, id),
 			with: { user: { columns: { id: true } } },

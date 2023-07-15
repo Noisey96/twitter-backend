@@ -4,7 +4,7 @@ import * as jose from 'jose';
 import { eq } from 'drizzle-orm';
 
 import { Env, Variables } from '../app';
-import { connectToDatabase } from '../services/databaseService';
+import { connectToDatabaseViaWebSockets } from '../services/databaseService';
 import { sendEmailToken } from '../services/emailService';
 import { users, tokens } from '../../src/db/schema';
 
@@ -35,7 +35,7 @@ router.post('/login', async (c) => {
 	const expiration = new Date(new Date().getTime() + EMAIL_TOKEN_EXPIRATION_MINUTES * 60 * 1000);
 	try {
 		// on the DB, finds or generates the user and generates email token
-		const db = connectToDatabase(c.env.DATABASE_URL);
+		const db = connectToDatabaseViaWebSockets(c.env.DATABASE_URL);
 		let intendedUsers = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
 		if (!intendedUsers.length) intendedUsers = await db.insert(users).values({ email }).returning({ id: users.id });
 		const userId = intendedUsers[0].id;
@@ -57,7 +57,7 @@ router.post('/authenticate', async (c) => {
 	// validates email token
 	try {
 		// on DB, finds email token
-		const db = connectToDatabase(c.env.DATABASE_URL);
+		const db = connectToDatabaseViaWebSockets(c.env.DATABASE_URL);
 		const dbEmailToken = await db.query.tokens.findFirst({
 			where: eq(tokens.emailToken, emailToken),
 			columns: { id: true, valid: true, expiration: true },

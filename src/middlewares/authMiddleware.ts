@@ -3,7 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import * as jose from 'jose';
 import { eq } from 'drizzle-orm';
 
-import { connectToDatabase } from '../services/databaseService';
+import { connectToDatabaseViaHTTP } from '../services/databaseService';
 import { tokens } from '../db/schema';
 
 export async function authenticateToken(c: Context, next: () => Promise<void>) {
@@ -20,7 +20,7 @@ export async function authenticateToken(c: Context, next: () => Promise<void>) {
 		if (!tokenId) throw new HTTPException(401, { message: 'Unauthorized' });
 
 		// finds equivalent DB token
-		const db = connectToDatabase(c.env.DATABASE_URL);
+		const db = connectToDatabaseViaHTTP(c.env.DATABASE_URL);
 		const dbToken = await db.query.tokens.findFirst({
 			where: eq(tokens.id, tokenId),
 			with: { user: true },
