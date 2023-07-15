@@ -1,6 +1,5 @@
 # node
 node_modules/
-build/
 
 # environment
 .env
@@ -10,10 +9,6 @@ build/
 *.db
 migrations/
 
-# server
-*.pem
-*.ppk
-
 # emails
 .react-email/
 
@@ -22,4 +17,3 @@ logs/
 
 # misc
 future.txt
-reference/
