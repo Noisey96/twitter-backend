@@ -59,12 +59,12 @@ router.post('/login', async (c) => {
 
 // creates a new user
 router.post('/register', async (c) => {
-	const { email, username, image, bio } = await c.req.json();
+	const { email, username } = await c.req.json();
 
 	try {
 		// creates a new user
 		const db = connectToDatabaseViaWebSockets(c.env.DATABASE_URL);
-		const newUsers = await db.insert(users).values({ email, username, image, bio }).returning({ id: users.id });
+		const newUsers = await db.insert(users).values({ email, username }).returning({ id: users.id });
 		const userId = newUsers[0].id;
 
 		// generates email token
