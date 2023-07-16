@@ -7,6 +7,7 @@ import { Env, Variables } from '../app';
 import { connectToDatabaseViaWebSockets } from '../services/databaseService';
 import { sendEmailToken } from '../services/emailService';
 import { users, tokens } from '../../src/db/schema';
+import { getErrorMessage } from '../utilities';
 
 const EMAIL_TOKEN_EXPIRATION_MINUTES = 10;
 const AUTHENTICATION_EXPIRATION_HOURS = 12;
@@ -25,22 +26,21 @@ async function generateAuthToken(tokenId: string, secret: string) {
 
 const router = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// generates and sends email token to the user
+// if the user is found, sends an email token to the user
 router.post('/login', async (c) => {
-	// validates provided email
 	const { email } = await c.req.json();
 
-	// generates email token
-	const emailToken = generateEmailToken();
-	const expiration = new Date(new Date().getTime() + EMAIL_TOKEN_EXPIRATION_MINUTES * 60 * 1000);
 	try {
-		// on the DB, finds the user
+		// finds the user
 		const db = connectToDatabaseViaWebSockets(c.env.DATABASE_URL);
 		const foundUsers = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
 		const found = foundUsers.length > 0;
 
 		// if user is found, creates and sends an email token
 		if (found) {
+			// generates email token
+			const emailToken = generateEmailToken();
+			const expiration = new Date(new Date().getTime() + EMAIL_TOKEN_EXPIRATION_MINUTES * 60 * 1000);
 			const userId = foundUsers[0].id;
 			await db.insert(tokens).values({ tokenType: 'EMAIL', emailToken, expiration, userId });
 			await sendEmailToken(
@@ -57,7 +57,28 @@ router.post('/login', async (c) => {
 	}
 });
 
-router.post('/register', async (c) => {});
+// creates a new user
+router.post('/register', async (c) => {
+	const { email, username, image, bio } = await c.req.json();
+
+	try {
+		// creates a new user
+		const db = connectToDatabaseViaWebSockets(c.env.DATABASE_URL);
+		const newUsers = await db.insert(users).values({ email, username, image, bio }).returning({ id: users.id });
+		const userId = newUsers[0].id;
+
+		// generates email token
+		const emailToken = generateEmailToken();
+		const expiration = new Date(new Date().getTime() + EMAIL_TOKEN_EXPIRATION_MINUTES * 60 * 1000);
+		await db.insert(tokens).values({ tokenType: 'EMAIL', emailToken, expiration, userId });
+		await sendEmailToken(email, emailToken, c.env.AWS_ACCESS_KEY_ID, c.env.AWS_SECRET_ACCESS_KEY, c.env.AWS_REGION);
+		c.status(200);
+		return c.text('OK');
+	} catch (err) {
+		const message = getErrorMessage(err);
+		throw new HTTPException(400, { message });
+	}
+});
 
 // validate the email token and generate JWT token for the user
 router.post('/authenticate', async (c) => {
