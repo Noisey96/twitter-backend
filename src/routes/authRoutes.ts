@@ -34,21 +34,30 @@ router.post('/login', async (c) => {
 	const emailToken = generateEmailToken();
 	const expiration = new Date(new Date().getTime() + EMAIL_TOKEN_EXPIRATION_MINUTES * 60 * 1000);
 	try {
-		// on the DB, finds or generates the user and generates email token
+		// on the DB, finds the user
 		const db = connectToDatabaseViaWebSockets(c.env.DATABASE_URL);
-		let intendedUsers = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
-		if (!intendedUsers.length) intendedUsers = await db.insert(users).values({ email }).returning({ id: users.id });
-		const userId = intendedUsers[0].id;
-		await db.insert(tokens).values({ tokenType: 'EMAIL', emailToken, expiration, userId });
+		const foundUsers = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+		const found = foundUsers.length > 0;
 
-		// sends email token to the email
-		await sendEmailToken(email, emailToken, c.env.AWS_ACCESS_KEY_ID, c.env.AWS_SECRET_ACCESS_KEY, c.env.AWS_REGION);
-		c.status(200);
-		return c.text('OK');
+		// if user is found, creates and sends an email token
+		if (found) {
+			const userId = foundUsers[0].id;
+			await db.insert(tokens).values({ tokenType: 'EMAIL', emailToken, expiration, userId });
+			await sendEmailToken(
+				email,
+				emailToken,
+				c.env.AWS_ACCESS_KEY_ID,
+				c.env.AWS_SECRET_ACCESS_KEY,
+				c.env.AWS_REGION,
+			);
+		}
+		return c.json({ found });
 	} catch (err) {
 		throw new HTTPException(400, { message: 'Cannot login' });
 	}
 });
+
+router.post('/register', async (c) => {});
 
 // validate the email token and generate JWT token for the user
 router.post('/authenticate', async (c) => {

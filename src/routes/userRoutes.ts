@@ -56,7 +56,7 @@ router.put('/:id', async (c) => {
 
 	try {
 		const db = connectToDatabaseViaHTTP(c.env.DATABASE_URL);
-		const updatedUsers = await db.update(users).set({ bio, name, image }).where(eq(users.id, id)).returning();
+		const updatedUsers = await db.update(users).set({ bio, image }).where(eq(users.id, id)).returning();
 		const updatedUser = updatedUsers[0];
 
 		return c.json(updatedUser);

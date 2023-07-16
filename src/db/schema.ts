@@ -7,9 +7,8 @@ export const users = pgTable('users', {
 	updatedAt: timestamp('updated_at').defaultNow(),
 
 	email: text('email').unique().notNull(),
+	username: text('username').unique().notNull(),
 
-	username: text('username').unique(),
-	name: text('name'),
 	image: text('image'),
 	bio: text('bio'),
 });

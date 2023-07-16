@@ -22,7 +22,7 @@ router.post('/', async (c) => {
 		const tweetId = insertedTweets[0].id;
 		const result = await db.query.tweets.findFirst({
 			where: eq(tweets.id, tweetId),
-			with: { user: { columns: { id: true, username: true, name: true, image: true } } },
+			with: { user: { columns: { id: true, username: true, image: true } } },
 		});
 		return c.json(result);
 	} catch (err) {
@@ -35,7 +35,7 @@ router.get('/', async (c) => {
 	const db = connectToDatabaseViaHTTP(c.env.DATABASE_URL);
 	const allTweets = await db.query.tweets.findMany({
 		with: {
-			user: { columns: { id: true, username: true, name: true, image: true } },
+			user: { columns: { id: true, username: true, image: true } },
 		},
 	});
 
@@ -49,7 +49,7 @@ router.get('/:id', async (c) => {
 	const db = connectToDatabaseViaHTTP(c.env.DATABASE_URL);
 	const tweet = await db.query.tweets.findFirst({
 		where: eq(tweets.id, id),
-		with: { user: { columns: { id: true, username: true, name: true, image: true } } },
+		with: { user: { columns: { id: true, username: true, image: true } } },
 	});
 
 	if (!tweet) throw new HTTPException(404, { message: 'Cannot get tweet' });
